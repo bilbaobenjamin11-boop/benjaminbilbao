@@ -27,49 +27,157 @@ html_page = """
 <!DOCTYPE html>
 <html>
 <head>
-<title>Student Management</title>
+<title>Cyber Student Portal</title>
 <style>
-body{ font-family:Arial; background:linear-gradient(135deg,#4facfe,#00f2fe); margin:0; }
-.container{ width:800px; margin:auto; margin-top:40px; }
-.card{ background:white; padding:20px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.2); }
-input{ padding:10px; margin:5px; border-radius:5px; border:1px solid #ccc; }
-button{ padding:10px 15px; background:#4CAF50; color:white; border:none; border-radius:5px; cursor:pointer; }
-button:hover{ background:#45a049; }
-table{ width:100%; border-collapse:collapse; margin-top:20px; }
-th,td{ border:1px solid #ddd; padding:10px; text-align:center; }
-th{ background:#4CAF50; color:white; }
-.deleteBtn{ background:red; }
-.editBtn{ background:#2196F3; margin-right:5px; }
+    :root {
+        --neon-blue: #00d2ff;
+        --neon-pink: #ff0055;
+        --dark-bg: #0d0d1a;
+        --card-bg: #161625;
+    }
+
+    body { 
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+        background: var(--dark-bg); 
+        color: #fff;
+        margin: 0; 
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    .container { 
+        width: 90%;
+        max-width: 900px; 
+        margin-top: 50px; 
+    }
+
+    .card { 
+        background: var(--card-bg); 
+        padding: 30px; 
+        border-radius: 15px; 
+        box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
+        border: 1px solid rgba(0, 210, 255, 0.1);
+    }
+
+    h2 { 
+        text-align: center; 
+        color: var(--neon-blue); 
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 30px;
+        text-shadow: 0 0 10px var(--neon-blue);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    input { 
+        padding: 12px; 
+        border-radius: 5px; 
+        border: 1px solid #333; 
+        background: #0a0a12;
+        color: white;
+        outline: none;
+        transition: 0.3s;
+    }
+
+    input:focus {
+        border-color: var(--neon-blue);
+        box-shadow: 0 0 8px var(--neon-blue);
+    }
+
+    .btn-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 30px;
+    }
+
+    button { 
+        padding: 12px 30px; 
+        background: transparent;
+        color: var(--neon-blue); 
+        border: 2px solid var(--neon-blue);
+        border-radius: 5px; 
+        cursor: pointer; 
+        font-weight: bold;
+        text-transform: uppercase;
+        transition: 0.3s;
+    }
+
+    button:hover { 
+        background: var(--neon-blue);
+        color: #000;
+        box-shadow: 0 0 15px var(--neon-blue);
+    }
+
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    th, td { 
+        padding: 15px; 
+        text-align: center; 
+        border-bottom: 1px solid #333; 
+    }
+
+    th { 
+        background: rgba(0, 210, 255, 0.1);
+        color: var(--neon-blue);
+        font-size: 0.9em;
+    }
+
+    .status-passed { color: #00ff88; font-weight: bold; }
+    .status-failed { color: var(--neon-pink); font-weight: bold; }
+
+    .deleteBtn { border-color: var(--neon-pink); color: var(--neon-pink); padding: 5px 10px; font-size: 0.8em; }
+    .deleteBtn:hover { background: var(--neon-pink); color: #fff; box-shadow: 0 0 10px var(--neon-pink); }
+    
+    .editBtn { border-color: #f1c40f; color: #f1c40f; padding: 5px 10px; font-size: 0.8em; margin-right: 5px; }
+    .editBtn:hover { background: #f1c40f; color: #000; box-shadow: 0 0 10px #f1c40f; }
 </style>
 </head>
 <body>
 
 <div class="container">
-<div class="card">
-<h2>Student Management System</h2>
+    <div class="card">
+        <h2>Student Management System</h2>
 
-<input type="hidden" id="studentId">
+        <input type="hidden" id="studentId">
+        
+        <div class="form-grid">
+            <input id="name" placeholder="Full Name">
+            <input id="g1" type="number" placeholder="1st Grade">
+            <input id="g2" type="number" placeholder="2nd Grade">
+            <input id="g3" type="number" placeholder="3rd Grade">
+        </div>
 
-<input id="name" placeholder="Name">
-<input id="g1" type="number" placeholder="Grade 1">
-<input id="g2" type="number" placeholder="Grade 2">
-<input id="g3" type="number" placeholder="Grade 3">
+        <div class="btn-container">
+            <button id="saveBtn" onclick="saveStudent()">Add Student</button>
+        </div>
 
-<button id="saveBtn" onclick="saveStudent()">Add Student</button>
-
-<table id="studentTable">
-<tr>
-<th>ID</th>
-<th>Name</th>
-<th>G1</th>
-<th>G2</th>
-<th>G3</th>
-<th>GPA</th>
-<th>Status</th>
-<th>Action</th>
-</tr>
-</table>
-</div>
+        <table id="studentTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>1st</th>
+                    <th>2nd</th>
+                    <th>3rd</th>
+                    <th>GPA</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
@@ -77,19 +185,20 @@ function loadStudents(){
     fetch('/students')
     .then(res=>res.json())
     .then(data=>{
-        let table=document.getElementById("studentTable")
-        table.innerHTML=`<tr><th>ID</th><th>Name</th><th>G1</th><th>G2</th><th>G3</th><th>GPA</th><th>Status</th><th>Action</th></tr>`
+        let tbody = document.getElementById("tableBody");
+        tbody.innerHTML = "";
         
         data.forEach(s=>{
-            table.innerHTML+=`
+            let statusClass = s.status === "Passed" ? "status-passed" : "status-failed";
+            tbody.innerHTML += `
             <tr>
                 <td>${s.id}</td>
                 <td>${s.name}</td>
                 <td>${s.grade1}</td>
                 <td>${s.grade2}</td>
                 <td>${s.grade3}</td>
-                <td>${s.gpa}</td>
-                <td>${s.status}</td>
+                <td>${s.gpa.toFixed(2)}</td>
+                <td class="${statusClass}">${s.status}</td>
                 <td>
                     <button class="editBtn" onclick='prepareEdit(${JSON.stringify(s)})'>Edit</button>
                     <button class="deleteBtn" onclick="deleteStudent(${s.id})">Delete</button>
@@ -99,14 +208,14 @@ function loadStudents(){
     })
 }
 
-// Fills the inputs with the student data to be edited
 function prepareEdit(student){
     document.getElementById("studentId").value = student.id;
     document.getElementById("name").value = student.name;
     document.getElementById("g1").value = student.grade1;
     document.getElementById("g2").value = student.grade2;
     document.getElementById("g3").value = student.grade3;
-    document.getElementById("saveBtn").innerText = "Update Student";
+    document.getElementById("saveBtn").innerText = "Update Record";
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function saveStudent(){
@@ -114,21 +223,28 @@ function saveStudent(){
     let url = id ? '/student/' + id : '/student';
     let method = id ? 'PUT' : 'POST';
 
+    const payload = {
+        name: document.getElementById("name").value,
+        grade1: document.getElementById("g1").value,
+        grade2: document.getElementById("g2").value,
+        grade3: document.getElementById("g3").value
+    };
+
+    if(!payload.name || !payload.grade1) {
+        alert("Please fill in the details.");
+        return;
+    }
+
     fetch(url, {
         method: method,
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            name: document.getElementById("name").value,
-            grade1: document.getElementById("g1").value,
-            grade2: document.getElementById("g2").value,
-            grade3: document.getElementById("g3").value
-        })
+        body: JSON.stringify(payload)
     })
     .then(res=>res.json())
-    .then(data=>{
+    .then(() => {
         loadStudents();
         clearInputs();
-    })
+    });
 }
 
 function clearInputs(){
@@ -141,7 +257,9 @@ function clearInputs(){
 }
 
 function deleteStudent(id){
-    fetch('/student/'+id,{ method:'DELETE' }).then(res=>res.json()).then(data=>loadStudents())
+    if(confirm("Delete this record?")) {
+        fetch('/student/'+id, { method:'DELETE' }).then(() => loadStudents());
+    }
 }
 
 loadStudents();
@@ -167,7 +285,7 @@ def get_students():
 def add_student():
     data = request.get_json()
     g1, g2, g3 = float(data["grade1"]), float(data["grade2"]), float(data["grade3"])
-    gpa = round((g1 + g2 + g3) / 3, 2)
+    gpa = (g1 + g2 + g3) / 3
     status = "Passed" if gpa >= 75 else "Failed"
     
     conn = sqlite3.connect(DATABASE)
@@ -176,14 +294,13 @@ def add_student():
                    (data["name"], g1, g2, g3, gpa, status))
     conn.commit()
     conn.close()
-    return jsonify({"message":"Added"})
+    return jsonify({"success": True})
 
-# NEW UPDATE ROUTE
 @app.route('/student/<int:id>', methods=['PUT'])
 def update_student(id):
     data = request.get_json()
     g1, g2, g3 = float(data["grade1"]), float(data["grade2"]), float(data["grade3"])
-    gpa = round((g1 + g2 + g3) / 3, 2)
+    gpa = (g1 + g2 + g3) / 3
     status = "Passed" if gpa >= 75 else "Failed"
 
     conn = sqlite3.connect(DATABASE)
@@ -192,7 +309,7 @@ def update_student(id):
                    (data["name"], g1, g2, g3, gpa, status, id))
     conn.commit()
     conn.close()
-    return jsonify({"message":"Updated"})
+    return jsonify({"success": True})
 
 @app.route('/student/<int:id>', methods=['DELETE'])
 def delete_student(id):
@@ -201,7 +318,7 @@ def delete_student(id):
     cursor.execute("DELETE FROM students WHERE id=?", (id,))
     conn.commit()
     conn.close()
-    return jsonify({"message":"Deleted"})
+    return jsonify({"success": True})
 
 if __name__ == '__main__':
     app.run(debug=True)
