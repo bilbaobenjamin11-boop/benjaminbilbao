@@ -39,15 +39,20 @@ html_page = """
     body { 
         font-family: 'Courier New', Courier, monospace; 
         background-color: var(--bg-dark);
-        background-image: 
-            linear-gradient(rgba(255, 0, 127, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 0, 127, 0.05) 1px, transparent 1px);
+        background-image: linear-gradient(rgba(255, 0, 127, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 0, 127, 0.05) 1px, transparent 1px);
         background-size: 30px 30px;
         color: #fff;
         margin: 0;
         display: flex;
-        justify-content: center;
-        padding: 40px 20px;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .role-selector {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
     }
 
     .container { width: 100%; max-width: 900px; }
@@ -55,19 +60,11 @@ html_page = """
     .card { 
         background: var(--card-bg); 
         padding: 30px; 
-        border-radius: 5px; 
         border: 2px solid var(--neon-pink);
-        box-shadow: 0 0 20px rgba(255, 0, 127, 0.3), inset 0 0 10px rgba(255, 0, 127, 0.2);
+        box-shadow: 0 0 20px rgba(255, 0, 127, 0.3);
     }
 
-    h2 { 
-        text-align: center; 
-        color: var(--neon-pink); 
-        text-transform: uppercase;
-        letter-spacing: 5px;
-        text-shadow: 0 0 10px var(--neon-pink);
-        margin-top: 0;
-    }
+    h2 { text-align: center; color: var(--neon-pink); letter-spacing: 5px; text-shadow: 0 0 10px var(--neon-pink); }
 
     .form-row {
         display: grid;
@@ -77,93 +74,58 @@ html_page = """
     }
 
     input { 
-        background: #000;
-        border: 1px solid var(--neon-pink);
-        padding: 12px; 
-        color: var(--neon-blue);
-        border-radius: 0;
-        outline: none;
+        background: #000; border: 1px solid var(--neon-pink); padding: 12px; color: var(--neon-blue); outline: none;
     }
 
-    input:focus {
-        box-shadow: 0 0 10px var(--neon-blue);
-        border-color: var(--neon-blue);
-    }
-
-    .action-bar {
-        text-align: center;
-        margin-bottom: 30px;
-    }
+    input:focus { box-shadow: 0 0 10px var(--neon-blue); border-color: var(--neon-blue); }
 
     button { 
-        padding: 12px 25px; 
-        background: transparent;
-        color: var(--neon-pink); 
-        border: 2px solid var(--neon-pink);
-        cursor: pointer; 
-        font-weight: bold;
-        text-transform: uppercase;
-        transition: 0.3s;
+        padding: 10px 20px; background: transparent; color: var(--neon-pink); border: 2px solid var(--neon-pink);
+        cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s;
     }
 
-    button:hover { 
-        background: var(--neon-pink);
-        color: #000;
-        box-shadow: 0 0 20px var(--neon-pink);
-    }
+    button:hover { background: var(--neon-pink); color: #000; box-shadow: 0 0 15px var(--neon-pink); }
 
-    table { 
-        width: 100%; 
-        border-collapse: collapse; 
-        margin-top: 20px;
-    }
-
-    th { 
-        border-bottom: 2px solid var(--neon-blue);
-        color: var(--neon-blue);
-        padding: 15px;
-        text-transform: uppercase;
-        font-size: 0.85em;
-    }
-
-    td { 
-        padding: 15px; 
-        text-align: center; 
-        border-bottom: 1px solid #222;
-        font-size: 0.9em;
-    }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th { border-bottom: 2px solid var(--neon-blue); color: var(--neon-blue); padding: 15px; text-transform: uppercase; }
+    td { padding: 15px; text-align: center; border-bottom: 1px solid #222; }
 
     .status-passed { color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); }
     .status-failed { color: var(--neon-pink); text-shadow: 0 0 5px var(--neon-pink); }
 
-    .editBtn { border-color: #f1c40f; color: #f1c40f; padding: 5px 10px; margin-right: 5px; }
-    .editBtn:hover { background: #f1c40f; color: #000; }
+    #studentPortal, #adminPortal { display: none; }
+    .active { display: block !important; }
 
-    .deleteBtn { border-color: #ff4b2b; color: #ff4b2b; padding: 5px 10px; }
-    .deleteBtn:hover { background: #ff4b2b; color: #000; }
-
+    .search-result {
+        margin-top: 20px;
+        padding: 20px;
+        border: 1px dashed var(--neon-blue);
+        text-align: center;
+        font-size: 1.2em;
+    }
 </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="card">
-        <h2>System Terminal</h2>
+<div class="role-selector">
+    <button onclick="switchRole('admin')">Admin Access</button>
+    <button onclick="switchRole('student')">Student Portal</button>
+</div>
 
+<div class="container">
+    <div id="adminPortal" class="card active">
+        <h2>Admin Control Unit</h2>
         <input type="hidden" id="studentId">
-        
         <div class="form-row">
             <input id="name" placeholder="IDENT_NAME">
             <input id="g1" type="number" placeholder="1ST_GRD">
             <input id="g2" type="number" placeholder="2ND_GRD">
             <input id="g3" type="number" placeholder="3RD_GRD">
         </div>
-
-        <div class="action-bar">
+        <div style="text-align: center; margin-bottom: 20px;">
             <button id="saveBtn" onclick="saveStudent()">Execute Entry</button>
         </div>
-
-        <table id="studentTable">
+        <table id="adminTable">
             <thead>
                 <tr>
                     <th>UID</th>
@@ -176,17 +138,39 @@ html_page = """
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="tableBody"></tbody>
+            <tbody id="adminTableBody"></tbody>
         </table>
+    </div>
+
+    <div id="studentPortal" class="card">
+        <h2>Student Inquiry Terminal</h2>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <input id="searchName" placeholder="ENTER YOUR FULL NAME" style="flex: 1;">
+            <button onclick="searchStatus()">Check Status</button>
+        </div>
+        <div id="resultDisplay" class="search-result" style="display:none;"></div>
     </div>
 </div>
 
 <script>
-function loadStudents(){
+function switchRole(role) {
+    document.getElementById('adminPortal').classList.remove('active');
+    document.getElementById('studentPortal').classList.remove('active');
+    if(role === 'admin') {
+        document.getElementById('adminPortal').classList.add('active');
+        loadAdminData();
+    } else {
+        document.getElementById('studentPortal').classList.add('active');
+        document.getElementById('resultDisplay').style.display = 'none';
+    }
+}
+
+// ADMIN LOGIC
+function loadAdminData(){
     fetch('/students')
     .then(res=>res.json())
     .then(data=>{
-        let tbody = document.getElementById("tableBody");
+        let tbody = document.getElementById("adminTableBody");
         tbody.innerHTML = "";
         data.forEach(s=>{
             let statusClass = s.status === "Passed" ? "status-passed" : "status-failed";
@@ -200,21 +184,12 @@ function loadStudents(){
                 <td>${s.gpa.toFixed(2)}</td>
                 <td class="${statusClass}">${s.status.toUpperCase()}</td>
                 <td>
-                    <button class="editBtn" onclick='prepareEdit(${JSON.stringify(s)})'>Edit</button>
-                    <button class="deleteBtn" onclick="deleteStudent(${s.id})">Delete</button>
+                    <button style="border-color:#f1c40f; color:#f1c40f;" onclick='prepareEdit(${JSON.stringify(s)})'>Edit</button>
+                    <button style="border-color:red; color:red;" onclick="deleteStudent(${s.id})">Delete</button>
                 </td>
             </tr>`
         })
     })
-}
-
-function prepareEdit(student){
-    document.getElementById("studentId").value = student.id;
-    document.getElementById("name").value = student.name;
-    document.getElementById("g1").value = student.grade1;
-    document.getElementById("g2").value = student.grade2;
-    document.getElementById("g3").value = student.grade3;
-    document.getElementById("saveBtn").innerText = "Update Entry";
 }
 
 function saveStudent(){
@@ -231,11 +206,19 @@ function saveStudent(){
             grade2: document.getElementById("g2").value,
             grade3: document.getElementById("g3").value
         })
-    })
-    .then(() => {
-        loadStudents();
+    }).then(() => {
+        loadAdminData();
         clearInputs();
     });
+}
+
+function prepareEdit(s){
+    document.getElementById("studentId").value = s.id;
+    document.getElementById("name").value = s.name;
+    document.getElementById("g1").value = s.grade1;
+    document.getElementById("g2").value = s.grade2;
+    document.getElementById("g3").value = s.grade3;
+    document.getElementById("saveBtn").innerText = "Update Entry";
 }
 
 function clearInputs(){
@@ -248,16 +231,33 @@ function clearInputs(){
 }
 
 function deleteStudent(id){
-    fetch('/student/'+id, { method:'DELETE' }).then(() => loadStudents());
+    if(confirm("Confirm Deletion?")) {
+        fetch('/student/'+id, { method:'DELETE' }).then(() => loadAdminData());
+    }
 }
 
-loadStudents();
+// STUDENT LOGIC
+function searchStatus(){
+    let query = document.getElementById("searchName").value;
+    fetch('/search?name=' + encodeURIComponent(query))
+    .then(res => res.json())
+    .then(data => {
+        let display = document.getElementById("resultDisplay");
+        display.style.display = "block";
+        if(data.found) {
+            let color = data.status === "Passed" ? "var(--neon-blue)" : "var(--neon-pink)";
+            display.innerHTML = `NAME: ${data.name.toUpperCase()}<br>RESULT: <span style="color:${color}">${data.status.toUpperCase()}</span>`;
+        } else {
+            display.innerHTML = "IDENTITY NOT FOUND IN DATABASE";
+        }
+    });
+}
+
+loadAdminData();
 </script>
 </body>
 </html>
 """
-
-# ... [Flask Routes remain identical to previous working update code] ...
 
 @app.route('/')
 def home():
@@ -271,6 +271,18 @@ def get_students():
     rows = cursor.fetchall()
     conn.close()
     return jsonify([{"id":r[0],"name":r[1],"grade1":r[2],"grade2":r[3],"grade3":r[4],"gpa":r[5],"status":r[6]} for r in rows])
+
+@app.route('/search')
+def search_student():
+    name = request.args.get('name')
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT name, status FROM students WHERE name LIKE ?", (name,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return jsonify({"found": True, "name": row[0], "status": row[1]})
+    return jsonify({"found": False})
 
 @app.route('/student', methods=['POST'])
 def add_student():
