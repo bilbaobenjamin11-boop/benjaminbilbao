@@ -10,12 +10,12 @@ ADMIN_PASS = "cyber123"
 def init_db():
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    # Added 'subject' column to the schema
+    # Removed subject, added student_type
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS students (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
-        subject TEXT,
+        student_type TEXT,
         grade1 REAL,
         grade2 REAL,
         grade3 REAL,
@@ -32,7 +32,7 @@ html_page = """
 <!DOCTYPE html>
 <html>
 <head>
-<title>Cyber Grade Portal v2</title>
+<title>Cyber Grade System</title>
 <style>
     :root {
         --neon-pink: #ff007f;
@@ -62,15 +62,17 @@ html_page = """
     th { border-bottom: 2px solid var(--neon-blue); color: var(--neon-blue); padding: 15px; }
     td { padding: 15px; text-align: center; border-bottom: 1px solid #222; }
 
-    /* Modal Styling */
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 2000; }
-    .modal-content { background: #111; padding: 30px; border: 2px solid var(--neon-blue); width: 500px; box-shadow: 0 0 30px var(--neon-blue); }
-    .modal-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 20px; }
+    .modal-content { background: #111; padding: 30px; border: 2px solid var(--neon-blue); width: 500px; }
 
     #adminPortal { display: none; }
     .nav-bar { width: 100%; max-width: 1000px; display: flex; justify-content: flex-end; margin-bottom: 10px; }
     .status-passed { color: var(--neon-blue); }
     .status-failed { color: var(--neon-pink); }
+
+    .grade-display { margin-top: 20px; padding: 20px; border: 1px solid var(--neon-blue); background: rgba(0, 242, 255, 0.05); }
+    .grade-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
+    .grade-box { border: 1px solid #333; padding: 10px; text-align: center; }
 </style>
 </head>
 <body>
@@ -84,28 +86,37 @@ html_page = """
         <h2>Student Inquiry Terminal</h2>
         <div style="display: flex; gap: 10px;">
             <input id="searchName" placeholder="ENTER FULL NAME" style="flex: 1;">
-            <button onclick="searchStatus()">Check Status</button>
+            <button onclick="searchStatus()">View Grades</button>
         </div>
-        <div id="resultDisplay" style="margin-top:20px; text-align:center; display:none; padding:20px; border:1px dashed var(--neon-blue);"></div>
+        
+        <div id="resultDisplay" class="grade-display" style="display:none;">
+            <h3 id="res_name" style="color:var(--neon-blue); margin-top:0;"></h3>
+            <p id="res_type" style="font-size: 0.8em; color: #888;"></p>
+            <div class="grade-grid">
+                <div class="grade-box">1st: <span id="res_g1"></span></div>
+                <div class="grade-box">2nd: <span id="res_g2"></span></div>
+                <div class="grade-box">3rd: <span id="res_g3"></span></div>
+            </div>
+            <div style="text-align:center; font-size:1.2em; font-weight:bold;">
+                GPA: <span id="res_gpa"></span> | STATUS: <span id="res_status"></span>
+            </div>
+        </div>
     </div>
 
     <div id="adminPortal" class="card">
         <h2>Admin Control Unit</h2>
         <div class="form-grid">
-            <input id="add_name" placeholder="IDENT_NAME">
-            <select id="add_subject">
-                <option value="" disabled selected>SUBJECT</option>
-                <option value="Mathematics">Mathematics</option>
-                <option value="Science">Science</option>
-                <option value="English">English</option>
-                <option value="Programming">Programming</option>
+            <input id="add_name" placeholder="STUDENT NAME">
+            <select id="add_type">
+                <option value="New Student">New Student</option>
+                <option value="Old Student">Old Student</option>
             </select>
             <input id="add_g1" type="number" placeholder="1ST">
             <input id="add_g2" type="number" placeholder="2ND">
             <input id="add_g3" type="number" placeholder="3RD">
         </div>
         <div style="text-align: center;">
-            <button onclick="saveNewStudent()">Execute Entry</button>
+            <button onclick="saveNewStudent()">Register Entry</button>
             <button onclick="logout()" style="border-color:#555; color:#555;">Logout</button>
         </div>
         <table>
@@ -113,7 +124,7 @@ html_page = """
                 <tr>
                     <th>UID</th>
                     <th>Name</th>
-                    <th>Subject</th>
+                    <th>Type</th>
                     <th>GPA</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -126,23 +137,21 @@ html_page = """
 
 <div id="editModal" class="modal">
     <div class="modal-content">
-        <h3 style="color:var(--neon-blue); margin-top:0;">EDIT STUDENT RECORDS</h3>
+        <h3 style="color:var(--neon-blue); margin-top:0;">MOD_RECORDS</h3>
         <input type="hidden" id="edit_id">
-        <div class="modal-grid">
+        <div style="display:grid; gap:10px;">
             <input id="edit_name" placeholder="NAME">
-            <select id="edit_subject">
-                <option value="Mathematics">Mathematics</option>
-                <option value="Science">Science</option>
-                <option value="English">English</option>
-                <option value="Programming">Programming</option>
+            <select id="edit_type">
+                <option value="New Student">New Student</option>
+                <option value="Old Student">Old Student</option>
             </select>
-            <input id="edit_g1" type="number" placeholder="1ST GRADE">
-            <input id="edit_g2" type="number" placeholder="2ND GRADE">
-            <input id="edit_g3" type="number" placeholder="3RD GRADE">
+            <input id="edit_g1" type="number" placeholder="1ST">
+            <input id="edit_g2" type="number" placeholder="2ND">
+            <input id="edit_g3" type="number" placeholder="3RD">
         </div>
         <div style="margin-top:20px; display:flex; gap:10px;">
-            <button onclick="updateStudentRecord()" style="flex:1; border-color:var(--neon-blue); color:var(--neon-blue);">Update</button>
-            <button onclick="closeEditModal()" style="flex:1; border-color:#555; color:#555;">Cancel</button>
+            <button onclick="updateStudentRecord()" style="flex:1;">Update</button>
+            <button onclick="closeEditModal()" style="flex:1; border-color:#555;">Cancel</button>
         </div>
     </div>
 </div>
@@ -153,16 +162,13 @@ html_page = """
         <input type="text" id="user" placeholder="USERNAME" style="width:80%; margin-bottom:10px;">
         <input type="password" id="pass" placeholder="PASSWORD" style="width:80%; margin-bottom:20px;">
         <button onclick="attemptLogin()">LOGIN</button>
-        <button onclick="closeLogin()" style="border-color:#555; color:#555;">CANCEL</button>
     </div>
 </div>
 
 <script>
 let isAdmin = false;
 
-// AUTH LOGIC
 function openLogin() { document.getElementById('loginOverlay').style.display='flex'; }
-function closeLogin() { document.getElementById('loginOverlay').style.display='none'; }
 function attemptLogin() {
     const u = document.getElementById('user').value;
     const p = document.getElementById('pass').value;
@@ -171,8 +177,8 @@ function attemptLogin() {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({username: u, password: p})
     }).then(res => {
-        if(res.ok) { isAdmin=true; closeLogin(); showAdmin(); }
-        else alert("ACCESS DENIED");
+        if(res.ok) { isAdmin=true; document.getElementById('loginOverlay').style.display='none'; showAdmin(); }
+        else alert("DENIED");
     });
 }
 function showAdmin() {
@@ -183,7 +189,6 @@ function showAdmin() {
 }
 function logout() { location.reload(); }
 
-// DATA LOGIC
 function loadAdminData(){
     fetch('/students').then(res=>res.json()).then(data=>{
         let tbody = document.getElementById("adminTableBody");
@@ -192,23 +197,43 @@ function loadAdminData(){
             tbody.innerHTML += `<tr>
                 <td>#${s.id}</td>
                 <td>${s.name}</td>
-                <td>${s.subject}</td>
+                <td>${s.student_type}</td>
                 <td>${s.gpa.toFixed(2)}</td>
                 <td class="${s.status=='Passed'?'status-passed':'status-failed'}">${s.status.toUpperCase()}</td>
                 <td>
-                    <button style="border-color:#f1c40f; color:#f1c40f; padding:5px 10px;" onclick='openEditModal(${JSON.stringify(s)})'>EDIT</button>
-                    <button style="border-color:red; color:red; padding:5px 10px;" onclick="deleteStudent(${s.id})">DEL</button>
+                    <button style="border-color:#f1c40f; color:#f1c40f; padding:5px;" onclick='openEditModal(${JSON.stringify(s)})'>EDIT</button>
+                    <button style="border-color:red; color:red; padding:5px;" onclick="deleteStudent(${s.id})">DEL</button>
                 </td>
             </tr>`;
         });
     });
 }
 
-// EDIT MODAL FEATURE
+function searchStatus(){
+    let query = document.getElementById("searchName").value;
+    fetch('/search?name=' + encodeURIComponent(query)).then(res=>res.json()).then(data=>{
+        let display = document.getElementById("resultDisplay");
+        if(data.found) {
+            display.style.display = "block";
+            document.getElementById("res_name").innerText = data.name.toUpperCase();
+            document.getElementById("res_type").innerText = "RECORD TYPE: " + data.type.toUpperCase();
+            document.getElementById("res_g1").innerText = data.g1;
+            document.getElementById("res_g2").innerText = data.g2;
+            document.getElementById("res_g3").innerText = data.g3;
+            document.getElementById("res_gpa").innerText = data.gpa.toFixed(2);
+            document.getElementById("res_status").innerText = data.status.toUpperCase();
+            document.getElementById("res_status").className = data.status == 'Passed' ? 'status-passed' : 'status-failed';
+        } else {
+            alert("No record found.");
+            display.style.display = "none";
+        }
+    });
+}
+
 function openEditModal(s) {
     document.getElementById('edit_id').value = s.id;
     document.getElementById('edit_name').value = s.name;
-    document.getElementById('edit_subject').value = s.subject;
+    document.getElementById('edit_type').value = s.student_type;
     document.getElementById('edit_g1').value = s.grade1;
     document.getElementById('edit_g2').value = s.grade2;
     document.getElementById('edit_g3').value = s.grade3;
@@ -223,7 +248,7 @@ function updateStudentRecord(){
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             name: document.getElementById('edit_name').value,
-            subject: document.getElementById('edit_subject').value,
+            student_type: document.getElementById('edit_type').value,
             grade1: document.getElementById('edit_g1').value,
             grade2: document.getElementById('edit_g2').value,
             grade3: document.getElementById('edit_g3').value
@@ -237,26 +262,15 @@ function saveNewStudent(){
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             name: document.getElementById("add_name").value,
-            subject: document.getElementById("add_subject").value,
+            student_type: document.getElementById("add_type").value,
             grade1: document.getElementById("add_g1").value,
             grade2: document.getElementById("add_g2").value,
             grade3: document.getElementById("add_g3").value
         })
-    }).then(() => loadAdminData());
+    }).then(() => { loadAdminData(); alert("Student Registered!"); });
 }
 
-function searchStatus(){
-    let query = document.getElementById("searchName").value;
-    fetch('/search?name=' + encodeURIComponent(query)).then(res=>res.json()).then(data=>{
-        let display = document.getElementById("resultDisplay");
-        display.style.display = "block";
-        if(data.found) {
-            display.innerHTML = `NAME: ${data.name.toUpperCase()}<br>SUBJECT: ${data.subject}<br>RESULT: <span class="${data.status=='Passed'?'status-passed':'status-failed'}">${data.status.toUpperCase()}</span>`;
-        } else display.innerHTML = "IDENTITY NOT FOUND";
-    });
-}
-
-function deleteStudent(id){ if(confirm("Confirm?")) fetch('/student/'+id, {method:'DELETE'}).then(()=>loadAdminData()); }
+function deleteStudent(id){ if(confirm("Delete?")) fetch('/student/'+id, {method:'DELETE'}).then(()=>loadAdminData()); }
 </script>
 </body>
 </html>
@@ -280,18 +294,21 @@ def get_students():
     cursor.execute("SELECT * FROM students")
     rows = cursor.fetchall()
     conn.close()
-    return jsonify([{"id":r[0],"name":r[1],"subject":r[2],"grade1":r[3],"grade2":r[4],"grade3":r[5],"gpa":r[6],"status":r[7]} for r in rows])
+    return jsonify([{"id":r[0],"name":r[1],"student_type":r[2],"grade1":r[3],"grade2":r[4],"grade3":r[5],"gpa":r[6],"status":r[7]} for r in rows])
 
 @app.route('/search')
 def search_student():
     name = request.args.get('name')
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    cursor.execute("SELECT name, status, subject FROM students WHERE name LIKE ?", (name,))
+    cursor.execute("SELECT name, status, student_type, grade1, grade2, grade3, gpa FROM students WHERE name LIKE ?", (name,))
     row = cursor.fetchone()
     conn.close()
     if row:
-        return jsonify({"found": True, "name": row[0], "status": row[1], "subject": row[2]})
+        return jsonify({
+            "found": True, "name": row[0], "status": row[1], "type": row[2],
+            "g1": row[3], "g2": row[4], "g3": row[5], "gpa": row[6]
+        })
     return jsonify({"found": False})
 
 @app.route('/student', methods=['POST'])
@@ -302,8 +319,8 @@ def add_student():
     status = "Passed" if gpa >= 75 else "Failed"
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO students (name,subject,grade1,grade2,grade3,gpa,status) VALUES (?,?,?,?,?,?,?)", 
-                   (data["name"], data["subject"], g1, g2, g3, gpa, status))
+    cursor.execute("INSERT INTO students (name,student_type,grade1,grade2,grade3,gpa,status) VALUES (?,?,?,?,?,?,?)", 
+                   (data["name"], data["student_type"], g1, g2, g3, gpa, status))
     conn.commit()
     conn.close()
     return jsonify({"success": True})
@@ -316,8 +333,8 @@ def update_student(id):
     status = "Passed" if gpa >= 75 else "Failed"
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    cursor.execute("UPDATE students SET name=?, subject=?, grade1=?, grade2=?, grade3=?, gpa=?, status=? WHERE id=?", 
-                   (data["name"], data["subject"], g1, g2, g3, gpa, status, id))
+    cursor.execute("UPDATE students SET name=?, student_type=?, grade1=?, grade2=?, grade3=?, gpa=?, status=? WHERE id=?", 
+                   (data["name"], data["student_type"], g1, g2, g3, gpa, status, id))
     conn.commit()
     conn.close()
     return jsonify({"success": True})
