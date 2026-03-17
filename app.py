@@ -4,6 +4,10 @@ import sqlite3
 app = Flask(__name__)
 DATABASE = "students.db"
 
+# Admin Credentials (Hardcoded for this version)
+ADMIN_USER = "admin"
+ADMIN_PASS = "cyber123"
+
 def init_db():
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
@@ -27,7 +31,7 @@ html_page = """
 <!DOCTYPE html>
 <html>
 <head>
-<title>Cyber Student Management</title>
+<title>Cyber Grade Portal</title>
 <style>
     :root {
         --neon-pink: #ff007f;
@@ -46,13 +50,7 @@ html_page = """
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 20px;
-    }
-
-    .role-selector {
-        margin-bottom: 20px;
-        display: flex;
-        gap: 15px;
+        padding: 40px 20px;
     }
 
     .container { width: 100%; max-width: 900px; }
@@ -66,12 +64,7 @@ html_page = """
 
     h2 { text-align: center; color: var(--neon-pink); letter-spacing: 5px; text-shadow: 0 0 10px var(--neon-pink); }
 
-    .form-row {
-        display: grid;
-        grid-template-columns: 2fr 1fr 1fr 1fr;
-        gap: 10px;
-        margin-bottom: 20px;
-    }
+    .form-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
 
     input { 
         background: #000; border: 1px solid var(--neon-pink); padding: 12px; color: var(--neon-blue); outline: none;
@@ -93,27 +86,41 @@ html_page = """
     .status-passed { color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); }
     .status-failed { color: var(--neon-pink); text-shadow: 0 0 5px var(--neon-pink); }
 
-    #studentPortal, #adminPortal { display: none; }
-    .active { display: block !important; }
-
-    .search-result {
-        margin-top: 20px;
-        padding: 20px;
-        border: 1px dashed var(--neon-blue);
-        text-align: center;
-        font-size: 1.2em;
+    /* Login Modal Styles */
+    #loginOverlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 1000;
     }
+
+    .login-box {
+        background: #111; padding: 40px; border: 2px solid var(--neon-blue); width: 300px; text-align: center;
+    }
+
+    .login-box input { width: 80%; margin-bottom: 15px; border-color: var(--neon-blue); }
+
+    #adminPortal { display: none; }
+    #studentPortal { display: block; }
+
+    .nav-bar { width: 100%; max-width: 900px; display: flex; justify-content: flex-end; margin-bottom: 10px; }
 </style>
 </head>
 <body>
 
-<div class="role-selector">
-    <button onclick="switchRole('admin')">Admin Access</button>
-    <button onclick="switchRole('student')">Student Portal</button>
+<div class="nav-bar">
+    <button id="navBtn" onclick="toggleAdminAccess()">Access Admin</button>
 </div>
 
 <div class="container">
-    <div id="adminPortal" class="card active">
+    <div id="studentPortal" class="card">
+        <h2>Student Inquiry Terminal</h2>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <input id="searchName" placeholder="ENTER YOUR FULL NAME" style="flex: 1;">
+            <button onclick="searchStatus()">Check Status</button>
+        </div>
+        <div id="resultDisplay" style="margin-top:20px; text-align:center; font-size:1.2em; display:none; padding:20px; border:1px dashed var(--neon-blue);"></div>
+    </div>
+
+    <div id="adminPortal" class="card">
         <h2>Admin Control Unit</h2>
         <input type="hidden" id="studentId">
         <div class="form-row">
@@ -124,6 +131,7 @@ html_page = """
         </div>
         <div style="text-align: center; margin-bottom: 20px;">
             <button id="saveBtn" onclick="saveStudent()">Execute Entry</button>
+            <button onclick="logout()">Logout</button>
         </div>
         <table id="adminTable">
             <thead>
@@ -141,31 +149,72 @@ html_page = """
             <tbody id="adminTableBody"></tbody>
         </table>
     </div>
+</div>
 
-    <div id="studentPortal" class="card">
-        <h2>Student Inquiry Terminal</h2>
-        <div style="display: flex; gap: 10px; justify-content: center;">
-            <input id="searchName" placeholder="ENTER YOUR FULL NAME" style="flex: 1;">
-            <button onclick="searchStatus()">Check Status</button>
-        </div>
-        <div id="resultDisplay" class="search-result" style="display:none;"></div>
+<div id="loginOverlay">
+    <div class="login-box">
+        <h3 style="color:var(--neon-blue)">ADMIN AUTH</h3>
+        <input type="text" id="user" placeholder="USERNAME">
+        <input type="password" id="pass" placeholder="PASSWORD">
+        <br>
+        <button onclick="attemptLogin()">LOGIN</button>
+        <button onclick="closeLogin()" style="border-color:#555; color:#555;">CANCEL</button>
     </div>
 </div>
 
 <script>
-function switchRole(role) {
-    document.getElementById('adminPortal').classList.remove('active');
-    document.getElementById('studentPortal').classList.remove('active');
-    if(role === 'admin') {
-        document.getElementById('adminPortal').classList.add('active');
-        loadAdminData();
+let isAdminAuthenticated = false;
+
+function toggleAdminAccess() {
+    if (isAdminAuthenticated) {
+        showAdmin();
     } else {
-        document.getElementById('studentPortal').classList.add('active');
-        document.getElementById('resultDisplay').style.display = 'none';
+        document.getElementById('loginOverlay').style.display = 'flex';
     }
 }
 
-// ADMIN LOGIC
+function closeLogin() {
+    document.getElementById('loginOverlay').style.display = 'none';
+}
+
+function attemptLogin() {
+    const u = document.getElementById('user').value;
+    const p = document.getElementById('pass').value;
+
+    fetch('/admin-login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username: u, password: p})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            isAdminAuthenticated = true;
+            closeLogin();
+            showAdmin();
+        } else {
+            alert("ACCESS DENIED: INVALID CREDENTIALS");
+        }
+    });
+}
+
+function showAdmin() {
+    document.getElementById('studentPortal').style.display = 'none';
+    document.getElementById('adminPortal').style.display = 'block';
+    document.getElementById('navBtn').style.display = 'none';
+    loadAdminData();
+}
+
+function logout() {
+    isAdminAuthenticated = false;
+    document.getElementById('studentPortal').style.display = 'block';
+    document.getElementById('adminPortal').style.display = 'none';
+    document.getElementById('navBtn').style.display = 'block';
+    document.getElementById('user').value = '';
+    document.getElementById('pass').value = '';
+}
+
+// REST OF THE LOGIC
 function loadAdminData(){
     fetch('/students')
     .then(res=>res.json())
@@ -174,31 +223,32 @@ function loadAdminData(){
         tbody.innerHTML = "";
         data.forEach(s=>{
             let statusClass = s.status === "Passed" ? "status-passed" : "status-failed";
-            tbody.innerHTML += `
-            <tr>
-                <td>#${s.id}</td>
-                <td>${s.name}</td>
-                <td>${s.grade1}</td>
-                <td>${s.grade2}</td>
-                <td>${s.grade3}</td>
-                <td>${s.gpa.toFixed(2)}</td>
-                <td class="${statusClass}">${s.status.toUpperCase()}</td>
-                <td>
-                    <button style="border-color:#f1c40f; color:#f1c40f;" onclick='prepareEdit(${JSON.stringify(s)})'>Edit</button>
-                    <button style="border-color:red; color:red;" onclick="deleteStudent(${s.id})">Delete</button>
-                </td>
-            </tr>`
-        })
-    })
+            tbody.innerHTML += `<tr><td>#${s.id}</td><td>${s.name}</td><td>${s.grade1}</td><td>${s.grade2}</td><td>${s.grade3}</td><td>${s.gpa.toFixed(2)}</td><td class="${statusClass}">${s.status.toUpperCase()}</td><td><button style="border-color:#f1c40f; color:#f1c40f; padding:5px;" onclick='prepareEdit(${JSON.stringify(s)})'>EDIT</button><button style="border-color:red; color:red; padding:5px;" onclick="deleteStudent(${s.id})">DEL</button></td></tr>`;
+        });
+    });
+}
+
+function searchStatus(){
+    let query = document.getElementById("searchName").value;
+    fetch('/search?name=' + encodeURIComponent(query))
+    .then(res => res.json())
+    .then(data => {
+        let display = document.getElementById("resultDisplay");
+        display.style.display = "block";
+        if(data.found) {
+            let color = data.status === "Passed" ? "var(--neon-blue)" : "var(--neon-pink)";
+            display.innerHTML = `NAME: ${data.name.toUpperCase()}<br>RESULT: <span style="color:${color}">${data.status.toUpperCase()}</span>`;
+        } else {
+            display.innerHTML = "IDENTITY NOT FOUND IN DATABASE";
+        }
+    });
 }
 
 function saveStudent(){
     let id = document.getElementById("studentId").value;
     let url = id ? '/student/' + id : '/student';
-    let method = id ? 'PUT' : 'POST';
-
     fetch(url, {
-        method: method,
+        method: id ? 'PUT' : 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             name: document.getElementById("name").value,
@@ -206,10 +256,7 @@ function saveStudent(){
             grade2: document.getElementById("g2").value,
             grade3: document.getElementById("g3").value
         })
-    }).then(() => {
-        loadAdminData();
-        clearInputs();
-    });
+    }).then(() => { loadAdminData(); clearInputs(); });
 }
 
 function prepareEdit(s){
@@ -231,29 +278,8 @@ function clearInputs(){
 }
 
 function deleteStudent(id){
-    if(confirm("Confirm Deletion?")) {
-        fetch('/student/'+id, { method:'DELETE' }).then(() => loadAdminData());
-    }
+    if(confirm("Confirm Deletion?")) fetch('/student/'+id, { method:'DELETE' }).then(() => loadAdminData());
 }
-
-// STUDENT LOGIC
-function searchStatus(){
-    let query = document.getElementById("searchName").value;
-    fetch('/search?name=' + encodeURIComponent(query))
-    .then(res => res.json())
-    .then(data => {
-        let display = document.getElementById("resultDisplay");
-        display.style.display = "block";
-        if(data.found) {
-            let color = data.status === "Passed" ? "var(--neon-blue)" : "var(--neon-pink)";
-            display.innerHTML = `NAME: ${data.name.toUpperCase()}<br>RESULT: <span style="color:${color}">${data.status.toUpperCase()}</span>`;
-        } else {
-            display.innerHTML = "IDENTITY NOT FOUND IN DATABASE";
-        }
-    });
-}
-
-loadAdminData();
 </script>
 </body>
 </html>
@@ -262,6 +288,13 @@ loadAdminData();
 @app.route('/')
 def home():
     return render_template_string(html_page)
+
+@app.route('/admin-login', methods=['POST'])
+def admin_login():
+    data = request.get_json()
+    if data.get('username') == ADMIN_USER and data.get('password') == ADMIN_PASS:
+        return jsonify({"success": True})
+    return jsonify({"success": False}), 401
 
 @app.route('/students')
 def get_students():
