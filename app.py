@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 DATABASE = "students.db"
 
-# Create database and table
+# Create database and table with updated columns
 def init_db():
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
@@ -14,8 +14,11 @@ def init_db():
     CREATE TABLE IF NOT EXISTS students (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
-        grade TEXT,
-        section TEXT
+        grade1 REAL,
+        grade2 REAL,
+        grade3 REAL,
+        gpa REAL,
+        status TEXT
     )
     """)
 
@@ -105,8 +108,9 @@ background:red;
 <h2>Student Management System</h2>
 
 <input id="name" placeholder="Name">
-<input id="grade" placeholder="Grade">
-<input id="section" placeholder="Section">
+<input id="g1" type="number" placeholder="Grade 1">
+<input id="g2" type="number" placeholder="Grade 2">
+<input id="g3" type="number" placeholder="Grade 3">
 
 <button onclick="addStudent()">Add Student</button>
 
@@ -115,8 +119,11 @@ background:red;
 <tr>
 <th>ID</th>
 <th>Name</th>
-<th>Grade</th>
-<th>Section</th>
+<th>G1</th>
+<th>G2</th>
+<th>G3</th>
+<th>GPA</th>
+<th>Status</th>
 <th>Action</th>
 </tr>
 
@@ -140,8 +147,11 @@ table.innerHTML=`
 <tr>
 <th>ID</th>
 <th>Name</th>
-<th>Grade</th>
-<th>Section</th>
+<th>G1</th>
+<th>G2</th>
+<th>G3</th>
+<th>GPA</th>
+<th>Status</th>
 <th>Action</th>
 </tr>
 `
@@ -152,8 +162,11 @@ table.innerHTML+=`
 <tr>
 <td>${s.id}</td>
 <td>${s.name}</td>
-<td>${s.grade}</td>
-<td>${s.section}</td>
+<td>${s.grade1}</td>
+<td>${s.grade2}</td>
+<td>${s.grade3}</td>
+<td>${s.gpa}</td>
+<td>${s.status}</td>
 <td>
 <button class="deleteBtn" onclick="deleteStudent(${s.id})">Delete</button>
 </td>
@@ -173,8 +186,9 @@ method:'POST',
 headers:{'Content-Type':'application/json'},
 body:JSON.stringify({
 name:document.getElementById("name").value,
-grade:document.getElementById("grade").value,
-section:document.getElementById("section").value
+grade1:document.getElementById("g1").value,
+grade2:document.getElementById("g2").value,
+grade3:document.getElementById("g3").value
 })
 })
 
@@ -184,8 +198,9 @@ section:document.getElementById("section").value
 loadStudents()
 
 document.getElementById("name").value=""
-document.getElementById("grade").value=""
-document.getElementById("section").value=""
+document.getElementById("g1").value=""
+document.getElementById("g2").value=""
+document.getElementById("g3").value=""
 
 })
 
@@ -235,8 +250,11 @@ def get_students():
         students.append({
             "id": r[0],
             "name": r[1],
-            "grade": r[2],
-            "section": r[3]
+            "grade1": r[2],
+            "grade2": r[3],
+            "grade3": r[4],
+            "gpa": r[5],
+            "status": r[6]
         })
 
     return jsonify(students)
@@ -247,13 +265,21 @@ def get_students():
 def add_student():
 
     data = request.get_json()
+    
+    # Logic for GPA calculation
+    g1 = float(data["grade1"])
+    g2 = float(data["grade2"])
+    g3 = float(data["grade3"])
+    
+    gpa = round((g1 + g2 + g3) / 3, 2)
+    status = "Passed" if gpa >= 75 else "Failed"
 
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
 
     cursor.execute(
-        "INSERT INTO students (name,grade,section) VALUES (?,?,?)",
-        (data["name"], data["grade"], data["section"])
+        "INSERT INTO students (name,grade1,grade2,grade3,gpa,status) VALUES (?,?,?,?,?,?)",
+        (data["name"], g1, g2, g3, gpa, status)
     )
 
     conn.commit()
