@@ -27,82 +27,79 @@ html_page = """
 <!DOCTYPE html>
 <html>
 <head>
-<title>Cyber Student Portal</title>
+<title>Cyber Student Management</title>
 <style>
     :root {
-        --neon-blue: #00d2ff;
-        --neon-pink: #ff0055;
-        --dark-bg: #0d0d1a;
-        --card-bg: #161625;
+        --neon-pink: #ff007f;
+        --neon-blue: #00f2ff;
+        --bg-dark: #050505;
+        --card-bg: rgba(20, 20, 20, 0.95);
     }
 
     body { 
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-        background: var(--dark-bg); 
+        font-family: 'Courier New', Courier, monospace; 
+        background-color: var(--bg-dark);
+        background-image: 
+            linear-gradient(rgba(255, 0, 127, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 0, 127, 0.05) 1px, transparent 1px);
+        background-size: 30px 30px;
         color: #fff;
-        margin: 0; 
+        margin: 0;
         display: flex;
         justify-content: center;
-        min-height: 100vh;
+        padding: 40px 20px;
     }
 
-    .container { 
-        width: 90%;
-        max-width: 900px; 
-        margin-top: 50px; 
-    }
+    .container { width: 100%; max-width: 900px; }
 
     .card { 
         background: var(--card-bg); 
         padding: 30px; 
-        border-radius: 15px; 
-        box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
-        border: 1px solid rgba(0, 210, 255, 0.1);
+        border-radius: 5px; 
+        border: 2px solid var(--neon-pink);
+        box-shadow: 0 0 20px rgba(255, 0, 127, 0.3), inset 0 0 10px rgba(255, 0, 127, 0.2);
     }
 
     h2 { 
         text-align: center; 
-        color: var(--neon-blue); 
+        color: var(--neon-pink); 
         text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 30px;
-        text-shadow: 0 0 10px var(--neon-blue);
+        letter-spacing: 5px;
+        text-shadow: 0 0 10px var(--neon-pink);
+        margin-top: 0;
     }
 
-    .form-grid {
+    .form-row {
         display: grid;
         grid-template-columns: 2fr 1fr 1fr 1fr;
-        gap: 15px;
+        gap: 10px;
         margin-bottom: 20px;
     }
 
     input { 
+        background: #000;
+        border: 1px solid var(--neon-pink);
         padding: 12px; 
-        border-radius: 5px; 
-        border: 1px solid #333; 
-        background: #0a0a12;
-        color: white;
+        color: var(--neon-blue);
+        border-radius: 0;
         outline: none;
-        transition: 0.3s;
     }
 
     input:focus {
+        box-shadow: 0 0 10px var(--neon-blue);
         border-color: var(--neon-blue);
-        box-shadow: 0 0 8px var(--neon-blue);
     }
 
-    .btn-container {
-        display: flex;
-        justify-content: center;
+    .action-bar {
+        text-align: center;
         margin-bottom: 30px;
     }
 
     button { 
-        padding: 12px 30px; 
+        padding: 12px 25px; 
         background: transparent;
-        color: var(--neon-blue); 
-        border: 2px solid var(--neon-blue);
-        border-radius: 5px; 
+        color: var(--neon-pink); 
+        border: 2px solid var(--neon-pink);
         cursor: pointer; 
         font-weight: bold;
         text-transform: uppercase;
@@ -110,62 +107,66 @@ html_page = """
     }
 
     button:hover { 
-        background: var(--neon-blue);
+        background: var(--neon-pink);
         color: #000;
-        box-shadow: 0 0 15px var(--neon-blue);
+        box-shadow: 0 0 20px var(--neon-pink);
     }
 
     table { 
         width: 100%; 
         border-collapse: collapse; 
-        background: rgba(255, 255, 255, 0.02);
-    }
-
-    th, td { 
-        padding: 15px; 
-        text-align: center; 
-        border-bottom: 1px solid #333; 
+        margin-top: 20px;
     }
 
     th { 
-        background: rgba(0, 210, 255, 0.1);
+        border-bottom: 2px solid var(--neon-blue);
         color: var(--neon-blue);
+        padding: 15px;
+        text-transform: uppercase;
+        font-size: 0.85em;
+    }
+
+    td { 
+        padding: 15px; 
+        text-align: center; 
+        border-bottom: 1px solid #222;
         font-size: 0.9em;
     }
 
-    .status-passed { color: #00ff88; font-weight: bold; }
-    .status-failed { color: var(--neon-pink); font-weight: bold; }
+    .status-passed { color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); }
+    .status-failed { color: var(--neon-pink); text-shadow: 0 0 5px var(--neon-pink); }
 
-    .deleteBtn { border-color: var(--neon-pink); color: var(--neon-pink); padding: 5px 10px; font-size: 0.8em; }
-    .deleteBtn:hover { background: var(--neon-pink); color: #fff; box-shadow: 0 0 10px var(--neon-pink); }
-    
-    .editBtn { border-color: #f1c40f; color: #f1c40f; padding: 5px 10px; font-size: 0.8em; margin-right: 5px; }
-    .editBtn:hover { background: #f1c40f; color: #000; box-shadow: 0 0 10px #f1c40f; }
+    .editBtn { border-color: #f1c40f; color: #f1c40f; padding: 5px 10px; margin-right: 5px; }
+    .editBtn:hover { background: #f1c40f; color: #000; }
+
+    .deleteBtn { border-color: #ff4b2b; color: #ff4b2b; padding: 5px 10px; }
+    .deleteBtn:hover { background: #ff4b2b; color: #000; }
+
 </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h2>Student Management System</h2>
+        <h2>System Terminal</h2>
 
         <input type="hidden" id="studentId">
         
-        <div class="form-grid">
-            <input id="name" placeholder="Full Name">
-            <input id="g1" type="number" placeholder="1st Grade">
-            <input id="g2" type="number" placeholder="2nd Grade">
-            <input id="g3" type="number" placeholder="3rd Grade">
+        <div class="form-row">
+            <input id="name" placeholder="IDENT_NAME">
+            <input id="g1" type="number" placeholder="1ST_GRD">
+            <input id="g2" type="number" placeholder="2ND_GRD">
+            <input id="g3" type="number" placeholder="3RD_GRD">
         </div>
 
-        <div class="btn-container">
-            <button id="saveBtn" onclick="saveStudent()">Add Student</button>
+        <div class="action-bar">
+            <button id="saveBtn" onclick="saveStudent()">Execute Entry</button>
         </div>
 
         <table id="studentTable">
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>UID</th>
                     <th>Name</th>
                     <th>1st</th>
                     <th>2nd</th>
@@ -187,18 +188,17 @@ function loadStudents(){
     .then(data=>{
         let tbody = document.getElementById("tableBody");
         tbody.innerHTML = "";
-        
         data.forEach(s=>{
             let statusClass = s.status === "Passed" ? "status-passed" : "status-failed";
             tbody.innerHTML += `
             <tr>
-                <td>${s.id}</td>
+                <td>#${s.id}</td>
                 <td>${s.name}</td>
                 <td>${s.grade1}</td>
                 <td>${s.grade2}</td>
                 <td>${s.grade3}</td>
                 <td>${s.gpa.toFixed(2)}</td>
-                <td class="${statusClass}">${s.status}</td>
+                <td class="${statusClass}">${s.status.toUpperCase()}</td>
                 <td>
                     <button class="editBtn" onclick='prepareEdit(${JSON.stringify(s)})'>Edit</button>
                     <button class="deleteBtn" onclick="deleteStudent(${s.id})">Delete</button>
@@ -214,8 +214,7 @@ function prepareEdit(student){
     document.getElementById("g1").value = student.grade1;
     document.getElementById("g2").value = student.grade2;
     document.getElementById("g3").value = student.grade3;
-    document.getElementById("saveBtn").innerText = "Update Record";
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.getElementById("saveBtn").innerText = "Update Entry";
 }
 
 function saveStudent(){
@@ -223,24 +222,16 @@ function saveStudent(){
     let url = id ? '/student/' + id : '/student';
     let method = id ? 'PUT' : 'POST';
 
-    const payload = {
-        name: document.getElementById("name").value,
-        grade1: document.getElementById("g1").value,
-        grade2: document.getElementById("g2").value,
-        grade3: document.getElementById("g3").value
-    };
-
-    if(!payload.name || !payload.grade1) {
-        alert("Please fill in the details.");
-        return;
-    }
-
     fetch(url, {
         method: method,
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+            name: document.getElementById("name").value,
+            grade1: document.getElementById("g1").value,
+            grade2: document.getElementById("g2").value,
+            grade3: document.getElementById("g3").value
+        })
     })
-    .then(res=>res.json())
     .then(() => {
         loadStudents();
         clearInputs();
@@ -253,13 +244,11 @@ function clearInputs(){
     document.getElementById("g1").value = "";
     document.getElementById("g2").value = "";
     document.getElementById("g3").value = "";
-    document.getElementById("saveBtn").innerText = "Add Student";
+    document.getElementById("saveBtn").innerText = "Execute Entry";
 }
 
 function deleteStudent(id){
-    if(confirm("Delete this record?")) {
-        fetch('/student/'+id, { method:'DELETE' }).then(() => loadStudents());
-    }
+    fetch('/student/'+id, { method:'DELETE' }).then(() => loadStudents());
 }
 
 loadStudents();
@@ -267,6 +256,8 @@ loadStudents();
 </body>
 </html>
 """
+
+# ... [Flask Routes remain identical to previous working update code] ...
 
 @app.route('/')
 def home():
@@ -287,11 +278,9 @@ def add_student():
     g1, g2, g3 = float(data["grade1"]), float(data["grade2"]), float(data["grade3"])
     gpa = (g1 + g2 + g3) / 3
     status = "Passed" if gpa >= 75 else "Failed"
-    
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO students (name,grade1,grade2,grade3,gpa,status) VALUES (?,?,?,?,?,?)",
-                   (data["name"], g1, g2, g3, gpa, status))
+    cursor.execute("INSERT INTO students (name,grade1,grade2,grade3,gpa,status) VALUES (?,?,?,?,?,?)", (data["name"], g1, g2, g3, gpa, status))
     conn.commit()
     conn.close()
     return jsonify({"success": True})
@@ -302,11 +291,9 @@ def update_student(id):
     g1, g2, g3 = float(data["grade1"]), float(data["grade2"]), float(data["grade3"])
     gpa = (g1 + g2 + g3) / 3
     status = "Passed" if gpa >= 75 else "Failed"
-
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    cursor.execute("""UPDATE students SET name=?, grade1=?, grade2=?, grade3=?, gpa=?, status=? WHERE id=?""",
-                   (data["name"], g1, g2, g3, gpa, status, id))
+    cursor.execute("UPDATE students SET name=?, grade1=?, grade2=?, grade3=?, gpa=?, status=? WHERE id=?", (data["name"], g1, g2, g3, gpa, status, id))
     conn.commit()
     conn.close()
     return jsonify({"success": True})
